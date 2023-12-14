@@ -44,6 +44,7 @@ The NodeJS standard library has several operations that are called blocking oper
 **For you to do**:
 
 1. Explore the code in "operations/blocking.js" and "operations/nonblocking.js". For which code will the function moreWork() get executed. Why?
+"operations/nonblocking.js". The console log finishes the operation before the file read
 
 One must be careful when writing concurrent scripts in Node.js. If actions performed in later stages are related to actions related in previous stages or vice-versa then the program will be in an error state. 
 For example, consider the code in "operations/syncdelete.js".
@@ -59,33 +60,60 @@ When *setTimeout(callback, ms)* invoked, Node puts a *callback* in the timer pha
 **For you to do**:
 
 1. In "eventloop/timer.js", what will be the order of execution?
+foo
+baz
+foo
+baz
+bar(2)
+bar(1)
+
 
 2. How many callbacks will the timers phase queue have after the script is run? 
+2
 
 All I/O operations (e.g., read a file) run in the poll phase. The poll phase performs an I/O operation and puts all callbacks associated with the I/O operation in its queue. When the I/O operation completes, it executes the callbacks in the queue. 
 
 **For you to do**:
 1. In "eventloop/poll.js", which phase of the event loop will contain callback functions? What will they be?
+Poll phase
 2. What will be the execution order?
+foo
+done
+data
 
 The poll phase is actually a blocking phase. If the callback queue associated with it is empty, it blocks the event loop till the earliest scheduled callback in the timers queue.
 
 **For you to do**:
 1. Run the script "eventloop/poll_timer.js". Explain the order of execution in terms of the messages you see in the console.
-2. Change "Date.now() - startCallback < 10" in line 21 to "Date.now() - startCallback < 150". Will the order of execution change?
-3. Set timeout to 0. Will the order of execution change?
+attempt to read the file
+someAsyncOperation - I/O event loop 
+101ms have passed since I was scheduled - timer loop, delay from I/O operation
+2. Change "Date.now() - startCallback < 10" in line 21 to "Date.now() - startCallback < 150". Will the order of execution change? No, the delay will jsut be longer
+3. Set timeout to 0. Will the order of execution change? Yes
 
 **For you to do**:
 1. Run the script in "eventloop/immediate.js". What order of execution do you see in terms of the messages being logged.
+File read, I/O blocking 
+Timeout initialized
+Immediate console log
+Timer phase, time console
 2. Change the script such that the immediate callback runs first.
 
 The *process.nextTick()* API allows us to schedule tasks before the event loop.
 
 **For you to do**:
 1. Run the script "eventloop/tick_immediate.js". Explain the order of execution in terms of the messages logged.
+main = 0 <- synchronous execution
+nextTick = 1 <- next tick queue, runs before the event loop
+Run Immediately = 1 <- runs in the event loop
+
 2. Run the script "eventloop/tick_immediate.js". Why doesn't setTimeout get executed? 
+? assume this means 'starve.js'
+It keeps putting processes on the next tick queue, which blocks the event loop
 3. How does the output change if we replace process.nexTick(cb) with setImmediate(cb)?
+It will execute `setTimeout` after the `setImmediate`
 4. Why does the script "eventloop/eventemit.js" not log the event message? Change it such that the event message gets logged.
+The event is emited before the listener is attached.
 
 
 ## Asynchronous Programming
@@ -96,7 +124,7 @@ The script logs 0.
 **For you to do**:
 
 1. Change the script such that logs the sum of the elements in the list concatenated list.
-2. Does the code look unweildy to you?
+2. Does the code look unweildy to you? yes
 
 ### Promise
 
